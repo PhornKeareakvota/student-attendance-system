@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(TEACHER)
+  createdAt    DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+}
+
+model Classroom {
+  id           String     @id @default(cuid())
+  name         String     // e.g., "ថ្នាក់ទី 10A"
+  gradeLevel   String
+  academicYear String
+  students     Student[]
+}
+
+model Student {
+  id            String       @id @default(cuid())
+  studentIdCard String       @unique
+  nameKhmer     String
+  nameLatin     String
+  gender        Gender
+  phone         String?
+  classroomId   String
+  classroom     Classroom    @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  attendances   Attendance[]
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model Attendance {
+  id         String           @id @default(cuid())
+  studentId  String
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  date       DateTime         @db.Date
+  status     AttendanceStatus
+  note       String?
+  markedById String
+  
+  @@unique([studentId, date])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT_PERMITTED
+  ABSENT_UNPERMITTED
+  LATE
+}
